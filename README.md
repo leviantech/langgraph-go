@@ -7,7 +7,8 @@ A lightweight, strongly-typed implementation of the core features of [LangGraph]
 - **Generic State**: Define your own state struct and pass it safely between nodes without type assertions.
 - **Nodes & Edges**: Build workflows as graphs of functions.
 - **Conditional Routing**: Use custom logic to branch the execution path.
-- **Synchronous Execution**: Simple and predictable `Invoke` method for running the graph.
+- **Synchronous & Parallel Execution**: Support for parallel nodes execution using a functional generic helper.
+- **Visualization**: Built-in support to export your graph to a Mermaid.js diagram.
 
 ## Installation
 
@@ -75,6 +76,32 @@ g.AddConditionalEdge("StartNode", func(ctx context.Context, state State) (string
     "win_node":  "WinNode",
     "lose_node": "LoseNode",
 })
+```
+
+### Parallel Nodes
+
+You can execute multiple nodes concurrently and merge their state using `graph.Parallel`:
+
+```go
+parallelNode := graph.Parallel(
+    func(ctx context.Context, originalState State, newStates []State) (State, error) {
+        // Reducer logic: merge newStates into originalState
+        return mergedState, nil
+    },
+    ResearcherA,
+    ResearcherB,
+)
+
+g.AddNode("ParallelResearch", parallelNode)
+```
+
+### Visualization
+
+You can generate a Mermaid.js flowchart of your compiled graph natively:
+
+```go
+app, _ := g.Compile()
+fmt.Println(app.ToMermaid())
 ```
 
 ## Architecture

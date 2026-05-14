@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 // Runnable represents a compiled, executable state graph.
@@ -70,3 +71,32 @@ func (r *Runnable[State]) Invoke(ctx context.Context, initialState State) (State
 
 	return currentState, nil
 }
+
+// ToMermaid generates a Mermaid.js flowchart representation of the compiled graph.
+func (r *Runnable[State]) ToMermaid() string {
+	var sb strings.Builder
+	sb.WriteString("graph TD;\n")
+	
+	// Add entry point
+	sb.WriteString(fmt.Sprintf("    %s --> %s;\n", START, r.entryPoint))
+
+	// Normal edges
+	for from, to := range r.edges {
+		sb.WriteString(fmt.Sprintf("    %s --> %s;\n", from, to))
+	}
+
+	// Conditional edges
+	for from, condEdge := range r.conditionalEdges {
+		if condEdge.Mapping != nil {
+			for output, to := range condEdge.Mapping {
+				// Escape outputs to avoid Mermaid syntax issues if they contain spaces
+				sb.WriteString(fmt.Sprintf("    %s -. %s .-> %s;\n", from, output, to))
+			}
+		} else {
+			sb.WriteString(fmt.Sprintf("    %s -. custom_logic .-> unknown;\n", from))
+		}
+	}
+
+	return sb.String()
+}
+
